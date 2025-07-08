@@ -11,26 +11,10 @@ const PurchaseSuccessPage = () => {
 	const [error, setError] = useState(null);
 
 	useEffect(() => {
-		const handleCheckoutSuccess = async (sessionId) => {
-			try {
-				await axios.post("/payments/checkout-success", {
-					sessionId,
-				});
-				clearCart();
-			} catch (error) {
-				console.log(error);
-			} finally {
-				setIsProcessing(false);
-			}
-		};
-
-		const sessionId = new URLSearchParams(window.location.search).get("session_id");
-		if (sessionId) {
-			handleCheckoutSuccess(sessionId);
-		} else {
-			setIsProcessing(false);
-			setError("No session ID found in the URL");
-		}
+		// Since we're handling the success in OrderSummary component,
+		// we just need to clear the cart and show success message
+		clearCart();
+		setIsProcessing(false);
 	}, [clearCart]);
 
 	if (isProcessing) return "Processing...";

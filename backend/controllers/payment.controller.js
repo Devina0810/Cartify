@@ -1,6 +1,7 @@
 import Coupon from "../models/coupon.model.js";
 import Order from "../models/order.model.js";
-import { stripe } from "../lib/stripe.js";
+import { razorpay } from "../lib/razorpay.js";
+import crypto from "crypto";
 
 export const createCheckoutSession = async (req, res) => {
 	try {
@@ -12,21 +13,10 @@ export const createCheckoutSession = async (req, res) => {
 
 		let totalAmount = 0;
 
-		const lineItems = products.map((product) => {
-			const amount = Math.round(product.price * 100); // stripe wants u to send in the format of cents
+		// Calculate total amount in paisa (Razorpay uses paisa, not rupees)
+		products.forEach((product) => {
+			const amount = Math.round(product.price * 100); // convert to paisa
 			totalAmount += amount * product.quantity;
-
-			return {
-				price_data: {
-					currency: "usd",
-					product_data: {
-						name: product.name,
-						images: [product.image],
-					},
-					unit_amount: amount,
-				},
-				quantity: product.quantity || 1,
-			};
 		});
 
 		let coupon = null;
@@ -37,53 +27,63 @@ export const createCheckoutSession = async (req, res) => {
 			}
 		}
 
-		const session = await stripe.checkout.sessions.create({
-			payment_method_types: ["card"],
-			line_items: lineItems,
-			mode: "payment",
-			success_url: `${process.env.CLIENT_URL}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
-			cancel_url: `${process.env.CLIENT_URL}/purchase-cancel`,
-			discounts: coupon
-				? [
-						{
-							coupon: await createStripeCoupon(coupon.discountPercentage),
-						},
-				  ]
-				: [],
-			metadata: {
-				userId: req.user._id.toString(),
-				couponCode: couponCode || "",
-				products: JSON.stringify(
-					products.map((p) => ({
-						id: p._id,
-						quantity: p.quantity,
-						price: p.price,
-					}))
-				),
-			},
+		// Create Razorpay order
+		const order = await razorpay.orders.create({
+			amount: totalAmount,
+			currency: "INR",
+			receipt: `order_${Date.now()}`,
+			payment_capture: 1,
 		});
 
+		// Create new coupon if total amount is >= 20000 paisa (200 rupees)
 		if (totalAmount >= 20000) {
 			await createNewCoupon(req.user._id);
 		}
-		res.status(200).json({ id: session.id, totalAmount: totalAmount / 100 });
+
+		res.status(200).json({
+			orderId: order.id,
+			amount: totalAmount,
+			currency: "INR",
+			products: products,
+			couponCode: couponCode || null,
+		});
 	} catch (error) {
-		console.error("Error processing checkout:", error);
-		res.status(500).json({ message: "Error processing checkout", error: error.message });
+		console.error("Error creating Razorpay order:", error);
+		res.status(500).json({ message: "Error creating order", error: error.message });
 	}
 };
 
 export const checkoutSuccess = async (req, res) => {
 	try {
-		const { sessionId } = req.body;
-		const session = await stripe.checkout.sessions.retrieve(sessionId);
+		const { 
+			razorpay_order_id, 
+			razorpay_payment_id, 
+			razorpay_signature, 
+			products, 
+			couponCode 
+		} = req.body;
 
-		if (session.payment_status === "paid") {
-			if (session.metadata.couponCode) {
+		// Verify Razorpay signature
+		const sign = razorpay_order_id + "|" + razorpay_payment_id;
+		const expectedSign = crypto
+			.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+			.update(sign.toString())
+			.digest("hex");
+
+		if (razorpay_signature !== expectedSign) {
+			return res.status(400).json({ message: "Invalid payment signature" });
+		}
+
+		// Get payment details from Razorpay
+		const payment = await razorpay.payments.fetch(razorpay_payment_id);
+
+		if (payment.status === "captured") {
+			// Deactivate coupon if used
+			if (couponCode) {
 				await Coupon.findOneAndUpdate(
 					{
-						code: session.metadata.couponCode,
-						userId: session.metadata.userId,
+						code: couponCode,
+						userId: req.user._id,
 					},
 					{
 						isActive: false,
@@ -91,17 +91,17 @@ export const checkoutSuccess = async (req, res) => {
 				);
 			}
 
-			// create a new Order
-			const products = JSON.parse(session.metadata.products);
+			// Create a new Order
 			const newOrder = new Order({
-				user: session.metadata.userId,
+				user: req.user._id,
 				products: products.map((product) => ({
 					product: product.id,
 					quantity: product.quantity,
 					price: product.price,
 				})),
-				totalAmount: session.amount_total / 100, // convert from cents to dollars,
-				stripeSessionId: sessionId,
+				totalAmount: payment.amount / 100, // convert from paisa to rupees
+				razorpayOrderId: razorpay_order_id,
+				razorpayPaymentId: razorpay_payment_id,
 			});
 
 			await newOrder.save();
@@ -111,21 +111,14 @@ export const checkoutSuccess = async (req, res) => {
 				message: "Payment successful, order created, and coupon deactivated if used.",
 				orderId: newOrder._id,
 			});
+		} else {
+			res.status(400).json({ message: "Payment not captured" });
 		}
 	} catch (error) {
 		console.error("Error processing successful checkout:", error);
 		res.status(500).json({ message: "Error processing successful checkout", error: error.message });
 	}
 };
-
-async function createStripeCoupon(discountPercentage) {
-	const coupon = await stripe.coupons.create({
-		percent_off: discountPercentage,
-		duration: "once",
-	});
-
-	return coupon.id;
-}
 
 async function createNewCoupon(userId) {
 	await Coupon.findOneAndDelete({ userId });

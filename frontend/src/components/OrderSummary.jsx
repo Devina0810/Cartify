@@ -2,12 +2,7 @@ import { motion } from "framer-motion";
 import { useCartStore } from "../stores/useCartStore";
 import { Link } from "react-router-dom";
 import { MoveRight } from "lucide-react";
-import { loadStripe } from "@stripe/stripe-js";
 import axios from "../lib/axios";
-
-const stripePromise = loadStripe(
-	"pk_test_51KZYccCoOZF2UhtOwdXQl3vcizup20zqKqT9hVUIsVzsdBrhqbUI2fE0ZdEVLdZfeHjeyFXtqaNsyCJCmZWnjNZa00PzMAjlcL"
-);
 
 const OrderSummary = () => {
 	const { total, subtotal, coupon, isCouponApplied, cart } = useCartStore();
@@ -18,19 +13,63 @@ const OrderSummary = () => {
 	const formattedSavings = savings.toFixed(2);
 
 	const handlePayment = async () => {
-		const stripe = await stripePromise;
-		const res = await axios.post("/payments/create-checkout-session", {
-			products: cart,
-			couponCode: coupon ? coupon.code : null,
-		});
+		try {
+			// Create Razorpay order
+			const res = await axios.post("/payments/create-checkout-session", {
+				products: cart,
+				couponCode: coupon ? coupon.code : null,
+			});
 
-		const session = res.data;
-		const result = await stripe.redirectToCheckout({
-			sessionId: session.id,
-		});
+			const { orderId, amount, currency } = res.data;
 
-		if (result.error) {
-			console.error("Error:", result.error);
+			// Load Razorpay script
+			const script = document.createElement("script");
+			script.src = "https://checkout.razorpay.com/v1/checkout.js";
+			script.onload = () => {
+				const options = {
+					key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+					amount: amount,
+					currency: currency,
+					name: "E-Commerce Store",
+					description: "Payment for your order",
+					order_id: orderId,
+					handler: async function (response) {
+						// Payment successful
+						try {
+							await axios.post("/payments/checkout-success", {
+								razorpay_order_id: response.razorpay_order_id,
+								razorpay_payment_id: response.razorpay_payment_id,
+								razorpay_signature: response.razorpay_signature,
+								products: cart.map((item) => ({
+									id: item._id,
+									quantity: item.quantity,
+									price: item.price,
+								})),
+								couponCode: coupon ? coupon.code : null,
+							});
+							
+							// Redirect to success page
+							window.location.href = "/purchase-success";
+						} catch (error) {
+							console.error("Error processing payment:", error);
+							alert("Payment processed but order creation failed. Please contact support.");
+						}
+					},
+					prefill: {
+						name: "Customer Name",
+						email: "customer@example.com",
+					},
+					theme: {
+						color: "#10B981",
+					},
+				};
+
+				const rzp = new window.Razorpay(options);
+				rzp.open();
+			};
+			document.head.appendChild(script);
+		} catch (error) {
+			console.error("Error initiating payment:", error);
 		}
 	};
 
