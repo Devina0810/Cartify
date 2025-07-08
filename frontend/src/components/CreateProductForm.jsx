@@ -18,11 +18,13 @@ const CreateProductForm = () => {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
+		console.log("Form submitted with data:", newProduct);
 		try {
 			await createProduct(newProduct);
 			setNewProduct({ name: "", description: "", price: "", category: "", image: "" });
-		} catch {
-			console.log("error creating a product");
+			console.log("Product created successfully!");
+		} catch (error) {
+			console.log("Error creating a product:", error);
 		}
 	};
 
@@ -124,16 +126,21 @@ const CreateProductForm = () => {
 					</select>
 				</div>
 
-				<div className='mt-1 flex items-center'>
-					<input type='file' id='image' className='sr-only' accept='image/*' onChange={handleImageChange} />
-					<label
-						htmlFor='image'
-						className='cursor-pointer bg-gray-700 py-2 px-3 border border-gray-600 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-300 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500'
-					>
-						<Upload className='h-5 w-5 inline-block mr-2' />
-						Upload Image
+				<div>
+					<label className='block text-sm font-medium text-gray-300 mb-2'>
+						Product Image (Optional)
 					</label>
-					{newProduct.image && <span className='ml-3 text-sm text-gray-400'>Image uploaded </span>}
+					<div className='mt-1 flex items-center'>
+						<input type='file' id='image' className='sr-only' accept='image/*' onChange={handleImageChange} />
+						<label
+							htmlFor='image'
+							className='cursor-pointer bg-gray-700 py-2 px-3 border border-gray-600 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-300 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500'
+						>
+							<Upload className='h-5 w-5 inline-block mr-2' />
+							Upload Image
+						</label>
+						{newProduct.image && <span className='ml-3 text-sm text-gray-400'>Image uploaded </span>}
+					</div>
 				</div>
 
 				<button

@@ -14,9 +14,18 @@ export const getAllProducts = async (req, res) => {
 
 export const getFeaturedProducts = async (req, res) => {
 	try {
-		let featuredProducts = await redis.get("featured_products");
-		if (featuredProducts) {
-			return res.json(JSON.parse(featuredProducts));
+		let featuredProducts = null;
+		
+		// Try to get from Redis if available
+		if (redis) {
+			try {
+				featuredProducts = await redis.get("featured_products");
+				if (featuredProducts) {
+					return res.json(JSON.parse(featuredProducts));
+				}
+			} catch (redisError) {
+				console.log("Redis error, falling back to database:", redisError.message);
+			}
 		}
 
 		// if not in redis, fetch from mongodb
@@ -29,8 +38,13 @@ export const getFeaturedProducts = async (req, res) => {
 		}
 
 		// store in redis for future quick access
-
-		await redis.set("featured_products", JSON.stringify(featuredProducts));
+		if (redis) {
+			try {
+				await redis.set("featured_products", JSON.stringify(featuredProducts));
+			} catch (redisError) {
+				console.log("Redis cache error:", redisError.message);
+			}
+		}
 
 		res.json(featuredProducts);
 	} catch (error) {
@@ -41,14 +55,55 @@ export const getFeaturedProducts = async (req, res) => {
 
 export const createProduct = async (req, res) => {
 	try {
+		console.log("=== CREATE PRODUCT ENDPOINT HIT ===");
+		console.log("User:", req.user ? { id: req.user._id, email: req.user.email, role: req.user.role } : "No user");
+		console.log("Request body:", req.body);
+		
 		const { name, description, price, image, category } = req.body;
+
+		console.log("Creating product with data:", { name, description, price, category, hasImage: !!image });
+		console.log("Environment check:", {
+			cloudinaryName: process.env.CLOUDINARY_CLOUD_NAME,
+			hasCloudinaryKey: !!process.env.CLOUDINARY_API_KEY,
+			hasCloudinarySecret: !!process.env.CLOUDINARY_API_SECRET
+		});
+
+		// First, try to create the product without image to test basic functionality
+		if (!image) {
+			console.log("Creating product without image...");
+			const product = await Product.create({
+				name,
+				description,
+				price,
+				image: "",
+				category,
+			});
+			console.log("Product created successfully without image:", product._id);
+			return res.status(201).json(product);
+		}
 
 		let cloudinaryResponse = null;
 
 		if (image) {
-			cloudinaryResponse = await cloudinary.uploader.upload(image, { folder: "products" });
+			console.log("Uploading image to Cloudinary...");
+			console.log("Image data length:", image.length);
+			console.log("Image data preview:", image.substring(0, 50) + "...");
+			
+			try {
+				cloudinaryResponse = await cloudinary.uploader.upload(image, { 
+					folder: "products",
+					resource_type: "auto",
+					quality: "auto:low"
+				});
+				console.log("Cloudinary upload successful:", cloudinaryResponse.secure_url);
+			} catch (cloudinaryError) {
+				console.log("Cloudinary upload error:", cloudinaryError);
+				console.log("Cloudinary error details:", cloudinaryError.message);
+				throw new Error("Image upload failed: " + cloudinaryError.message);
+			}
 		}
 
+		console.log("Creating product in database...");
 		const product = await Product.create({
 			name,
 			description,
@@ -57,9 +112,13 @@ export const createProduct = async (req, res) => {
 			category,
 		});
 
+		console.log("Product created successfully:", product._id);
 		res.status(201).json(product);
 	} catch (error) {
-		console.log("Error in createProduct controller", error.message);
+		console.log("=== ERROR IN CREATE PRODUCT ===");
+		console.log("Error message:", error.message);
+		console.log("Full error:", error);
+		console.log("Stack trace:", error.stack);
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
@@ -146,10 +205,16 @@ export const toggleFeaturedProduct = async (req, res) => {
 async function updateFeaturedProductsCache() {
 	try {
 		// The lean() method  is used to return plain JavaScript objects instead of full Mongoose documents. This can significantly improve performance
-
 		const featuredProducts = await Product.find({ isFeatured: true }).lean();
-		await redis.set("featured_products", JSON.stringify(featuredProducts));
+		
+		if (redis) {
+			try {
+				await redis.set("featured_products", JSON.stringify(featuredProducts));
+			} catch (redisError) {
+				console.log("Redis cache update error:", redisError.message);
+			}
+		}
 	} catch (error) {
-		console.log("error in update cache function");
+		console.log("error in update cache function", error.message);
 	}
 }
