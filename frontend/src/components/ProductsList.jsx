@@ -5,89 +5,77 @@ import { useProductStore } from "../stores/useProductStore";
 const ProductsList = () => {
 	const { deleteProduct, toggleFeaturedProduct, products } = useProductStore();
 
-	console.log("products", products);
-
 	return (
 		<motion.div
-			className='bg-gray-800 shadow-lg rounded-lg overflow-hidden max-w-4xl mx-auto'
+			className='bg-[#f8f5f0] rounded-2xl shadow-xl overflow-hidden max-w-5xl mx-auto font-[Cormorant Garamond]'
 			initial={{ opacity: 0, y: 20 }}
 			animate={{ opacity: 1, y: 0 }}
 			transition={{ duration: 0.8 }}
 		>
-			<table className=' min-w-full divide-y divide-gray-700'>
-				<thead className='bg-gray-700'>
+			<table className='min-w-full divide-y divide-[#d7ccc8]'>
+				<thead className='bg-[#eaddcf]'>
 					<tr>
-						<th
-							scope='col'
-							className='px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider'
-						>
+						<th className='px-6 py-3 text-left text-xs font-semibold text-[#5e412f] uppercase tracking-wider'>
 							Product
 						</th>
-						<th
-							scope='col'
-							className='px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider'
-						>
+						<th className='px-6 py-3 text-left text-xs font-semibold text-[#5e412f] uppercase tracking-wider'>
 							Price
 						</th>
-						<th
-							scope='col'
-							className='px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider'
-						>
+						<th className='px-6 py-3 text-left text-xs font-semibold text-[#5e412f] uppercase tracking-wider'>
 							Category
 						</th>
-
-						<th
-							scope='col'
-							className='px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider'
-						>
+						<th className='px-6 py-3 text-left text-xs font-semibold text-[#5e412f] uppercase tracking-wider'>
 							Featured
 						</th>
-						<th
-							scope='col'
-							className='px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider'
-						>
+						<th className='px-6 py-3 text-left text-xs font-semibold text-[#5e412f] uppercase tracking-wider'>
 							Actions
 						</th>
 					</tr>
 				</thead>
 
-				<tbody className='bg-gray-800 divide-y divide-gray-700'>
+				<tbody className='bg-[#fdfaf7] divide-y divide-[#e0d6cd]'>
 					{products?.map((product) => (
-						<tr key={product._id} className='hover:bg-gray-700'>
+						<tr key={product._id} className='hover:bg-[#f2eae3] transition-colors duration-300'>
 							<td className='px-6 py-4 whitespace-nowrap'>
 								<div className='flex items-center'>
-									<div className='flex-shrink-0 h-10 w-10'>
+									<div className='h-12 w-12 rounded-full overflow-hidden'>
 										<img
-											className='h-10 w-10 rounded-full object-cover'
 											src={product.image}
 											alt={product.name}
+											className='object-cover w-full h-full'
 										/>
 									</div>
-									<div className='ml-4'>
-										<div className='text-sm font-medium text-white'>{product.name}</div>
+									<div className='ml-4 text-[#4e342e] font-medium text-lg'>
+										{product.name}
 									</div>
 								</div>
 							</td>
-							<td className='px-6 py-4 whitespace-nowrap'>
-								<div className='text-sm text-gray-300'>${product.price.toFixed(2)}</div>
+
+							<td className='px-6 py-4 whitespace-nowrap text-[#6d4c41] text-base'>
+								Rs{product.price.toFixed(2)}
 							</td>
-							<td className='px-6 py-4 whitespace-nowrap'>
-								<div className='text-sm text-gray-300'>{product.category}</div>
+
+							<td className='px-6 py-4 whitespace-nowrap text-[#6d4c41] text-base'>
+								{product.category}
 							</td>
+
 							<td className='px-6 py-4 whitespace-nowrap'>
 								<button
 									onClick={() => toggleFeaturedProduct(product._id)}
-									className={`p-1 rounded-full ${
-										product.isFeatured ? "bg-yellow-400 text-gray-900" : "bg-gray-600 text-gray-300"
-									} hover:bg-yellow-500 transition-colors duration-200`}
+									className={`p-2 rounded-full border transition-all duration-200 ${
+										product.isFeatured
+											? "bg-yellow-200 text-yellow-700 border-yellow-400"
+											: "bg-[#e0d6cd] text-[#5e412f] border-[#cabaa5]"
+									}`}
 								>
 									<Star className='h-5 w-5' />
 								</button>
 							</td>
-							<td className='px-6 py-4 whitespace-nowrap text-sm font-medium'>
+
+							<td className='px-6 py-4 whitespace-nowrap'>
 								<button
 									onClick={() => deleteProduct(product._id)}
-									className='text-red-400 hover:text-red-300'
+									className='text-red-600 hover:text-red-400 transition duration-200'
 								>
 									<Trash className='h-5 w-5' />
 								</button>
@@ -99,4 +87,5 @@ const ProductsList = () => {
 		</motion.div>
 	);
 };
+
 export default ProductsList;

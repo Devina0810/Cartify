@@ -11,7 +11,7 @@ const CartPage = () => {
 	const { cart } = useCartStore();
 
 	return (
-		<div className='py-8 md:py-16'>
+		<div className='py-8 md:py-16 bg-[#fdfaf5] font-[Cormorant Garamond] text-[#5e412f] min-h-screen'>
 			<div className='mx-auto max-w-screen-xl px-4 2xl:px-0'>
 				<div className='mt-6 sm:mt-8 md:gap-6 lg:flex lg:items-start xl:gap-8'>
 					<motion.div
@@ -52,16 +52,16 @@ export default CartPage;
 
 const EmptyCartUI = () => (
 	<motion.div
-		className='flex flex-col items-center justify-center space-y-4 py-16'
+		className='flex flex-col items-center justify-center space-y-4 py-16 text-center'
 		initial={{ opacity: 0, y: 20 }}
 		animate={{ opacity: 1, y: 0 }}
 		transition={{ duration: 0.5 }}
 	>
-		<ShoppingCart className='h-24 w-24 text-gray-300' />
-		<h3 className='text-2xl font-semibold '>Your cart is empty</h3>
-		<p className='text-gray-400'>Looks like you {"haven't"} added anything to your cart yet.</p>
+		<ShoppingCart className='h-24 w-24 text-[#cabaa5]' />
+		<h3 className='text-3xl font-semibold text-[#5e412f]'>Your cart is empty</h3>
+		<p className='text-[#a68a7f]'>Looks like you haven't added anything to your cart yet.</p>
 		<Link
-			className='mt-4 rounded-md bg-emerald-500 px-6 py-2 text-white transition-colors hover:bg-emerald-600'
+			className='mt-4 rounded-full bg-[#5e412f] px-6 py-2 text-[#fdfaf5] transition-colors hover:bg-[#7a5c45]'
 			to='/'
 		>
 			Start Shopping

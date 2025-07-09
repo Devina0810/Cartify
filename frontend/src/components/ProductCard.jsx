@@ -6,40 +6,42 @@ import { useCartStore } from "../stores/useCartStore";
 const ProductCard = ({ product }) => {
 	const { user } = useUserStore();
 	const { addToCart } = useCartStore();
+
 	const handleAddToCart = () => {
 		if (!user) {
 			toast.error("Please login to add products to cart", { id: "login" });
 			return;
-		} else {
-			// add to cart
-			addToCart(product);
 		}
+		addToCart(product);
 	};
 
 	return (
-		<div className='flex w-full relative flex-col overflow-hidden rounded-lg border border-gray-700 shadow-lg'>
-			<div className='relative mx-3 mt-3 flex h-60 overflow-hidden rounded-xl'>
-				<img className='object-cover w-full' src={product.image} alt='product image' />
-				<div className='absolute inset-0 bg-black bg-opacity-20' />
+		<div className="flex flex-col w-full bg-[#f5f1ec] rounded-2xl border border-[#cabaa5] shadow-md overflow-hidden transition duration-300 hover:shadow-lg font-[Cormorant Garamond]">
+			<div className="relative h-64 overflow-hidden">
+				<img
+					src={product.image}
+					alt={product.name}
+					className="object-cover w-full h-full transition-transform duration-500 hover:scale-105"
+				/>
 			</div>
 
-			<div className='mt-4 px-5 pb-5'>
-				<h5 className='text-xl font-semibold tracking-tight text-white'>{product.name}</h5>
-				<div className='mt-2 mb-5 flex items-center justify-between'>
-					<p>
-						<span className='text-3xl font-bold text-emerald-400'>${product.price}</span>
-					</p>
+			<div className="p-5 text-[#5e412f]">
+				<h5 className="text-2xl font-semibold mb-2">{product.name}</h5>
+
+				<div className="flex items-center justify-between mb-4">
+					<span className="text-xl font-bold text-[#8d6e63]">Rs{product.price}</span>
 				</div>
+
 				<button
-					className='flex items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-center text-sm font-medium
-					 text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300'
+					className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#8d6e63] hover:bg-[#7b5e55] text-white px-4 py-2.5 text-sm tracking-wide transition duration-300"
 					onClick={handleAddToCart}
 				>
-					<ShoppingCart size={22} className='mr-2' />
-					Add to cart
+					<ShoppingCart size={20} />
+					Add to Cart
 				</button>
 			</div>
 		</div>
 	);
 };
+
 export default ProductCard;

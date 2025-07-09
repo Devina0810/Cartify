@@ -14,7 +14,6 @@ const OrderSummary = () => {
 
 	const handlePayment = async () => {
 		try {
-			// Create Razorpay order
 			const res = await axios.post("/payments/create-checkout-session", {
 				products: cart,
 				couponCode: coupon ? coupon.code : null,
@@ -22,19 +21,17 @@ const OrderSummary = () => {
 
 			const { orderId, amount, currency } = res.data;
 
-			// Load Razorpay script
 			const script = document.createElement("script");
 			script.src = "https://checkout.razorpay.com/v1/checkout.js";
 			script.onload = () => {
 				const options = {
 					key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-					amount: amount,
-					currency: currency,
-					name: "E-Commerce Store",
+					amount,
+					currency,
+					name: "Cartify",
 					description: "Payment for your order",
 					order_id: orderId,
 					handler: async function (response) {
-						// Payment successful
 						try {
 							await axios.post("/payments/checkout-success", {
 								razorpay_order_id: response.razorpay_order_id,
@@ -47,88 +44,85 @@ const OrderSummary = () => {
 								})),
 								couponCode: coupon ? coupon.code : null,
 							});
-							
-							// Redirect to success page
 							window.location.href = "/purchase-success";
 						} catch (error) {
-							console.error("Error processing payment:", error);
-							alert("Payment processed but order creation failed. Please contact support.");
+							console.error("Payment succeeded but order creation failed:", error);
+							alert("Payment succeeded, but order failed. Contact support.");
 						}
 					},
 					prefill: {
-						name: "Customer Name",
+						name: "Customer",
 						email: "customer@example.com",
 					},
 					theme: {
-						color: "#10B981",
+						color: "#5e412f",
 					},
 				};
-
-				const rzp = new window.Razorpay(options);
-				rzp.open();
+				new window.Razorpay(options).open();
 			};
 			document.head.appendChild(script);
 		} catch (error) {
-			console.error("Error initiating payment:", error);
+			console.error("Payment error:", error);
 		}
 	};
 
 	return (
 		<motion.div
-			className='space-y-4 rounded-lg border border-gray-700 bg-gray-800 p-4 shadow-sm sm:p-6'
+			className="space-y-6 rounded-xl border border-[#cabaa5] bg-[#fdfaf5] p-6 shadow-md font-[Cormorant Garamond] text-[#5e412f]"
 			initial={{ opacity: 0, y: 20 }}
 			animate={{ opacity: 1, y: 0 }}
 			transition={{ duration: 0.5 }}
 		>
-			<p className='text-xl font-semibold text-emerald-400'>Order summary</p>
+			<p className="text-2xl font-semibold">Order Summary</p>
 
-			<div className='space-y-4'>
-				<div className='space-y-2'>
-					<dl className='flex items-center justify-between gap-4'>
-						<dt className='text-base font-normal text-gray-300'>Original price</dt>
-						<dd className='text-base font-medium text-white'>${formattedSubtotal}</dd>
+			<div className="space-y-4">
+				<div className="space-y-2">
+					<dl className="flex items-center justify-between text-base">
+						<dt className="text-[#7d6652]">Original Price</dt>
+						<dd className="font-medium">Rs{formattedSubtotal}</dd>
 					</dl>
 
 					{savings > 0 && (
-						<dl className='flex items-center justify-between gap-4'>
-							<dt className='text-base font-normal text-gray-300'>Savings</dt>
-							<dd className='text-base font-medium text-emerald-400'>-${formattedSavings}</dd>
+						<dl className="flex items-center justify-between text-base">
+							<dt className="text-[#7d6652]">Savings</dt>
+							<dd className="text-[#a04c4c] font-medium">-Rs{formattedSavings}</dd>
 						</dl>
 					)}
 
 					{coupon && isCouponApplied && (
-						<dl className='flex items-center justify-between gap-4'>
-							<dt className='text-base font-normal text-gray-300'>Coupon ({coupon.code})</dt>
-							<dd className='text-base font-medium text-emerald-400'>-{coupon.discountPercentage}%</dd>
+						<dl className="flex items-center justify-between text-base">
+							<dt className="text-[#7d6652]">Coupon ({coupon.code})</dt>
+							<dd className="text-[#a47551] font-medium">-{coupon.discountPercentage}%</dd>
 						</dl>
 					)}
-					<dl className='flex items-center justify-between gap-4 border-t border-gray-600 pt-2'>
-						<dt className='text-base font-bold text-white'>Total</dt>
-						<dd className='text-base font-bold text-emerald-400'>${formattedTotal}</dd>
+
+					<dl className="flex items-center justify-between border-t border-[#cabaa5] pt-3 text-lg font-bold">
+						<dt>Total</dt>
+						<dd className="text-[#5e412f]">Rs{formattedTotal}</dd>
 					</dl>
 				</div>
 
 				<motion.button
-					className='flex w-full items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300'
-					whileHover={{ scale: 1.05 }}
+					className="w-full rounded-md bg-[#5e412f] hover:bg-[#4a3325] text-white py-2.5 text-base font-medium transition duration-200"
+					whileHover={{ scale: 1.03 }}
 					whileTap={{ scale: 0.95 }}
 					onClick={handlePayment}
 				>
 					Proceed to Checkout
 				</motion.button>
 
-				<div className='flex items-center justify-center gap-2'>
-					<span className='text-sm font-normal text-gray-400'>or</span>
+				<div className="flex items-center justify-center gap-2 text-sm text-[#7d6652]">
+					<span>or</span>
 					<Link
-						to='/'
-						className='inline-flex items-center gap-2 text-sm font-medium text-emerald-400 underline hover:text-emerald-300 hover:no-underline'
+						to="/"
+						className="inline-flex items-center gap-2 text-[#5e412f] underline hover:no-underline"
 					>
-						Continue Shopping
-						<MoveRight size={16} />
+						Continue Shopping <MoveRight size={16} />
 					</Link>
 				</div>
 			</div>
 		</motion.div>
 	);
 };
+
 export default OrderSummary;

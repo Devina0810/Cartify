@@ -33,9 +33,11 @@ const FeaturedProducts = ({ featuredProducts }) => {
 	const isEndDisabled = currentIndex >= featuredProducts.length - itemsPerPage;
 
 	return (
-		<div className='py-12'>
+		<div className='py-16 bg-[#f5f0e8] font-[Cormorant Garamond]'>
 			<div className='container mx-auto px-4'>
-				<h2 className='text-center text-5xl sm:text-6xl font-bold text-emerald-400 mb-4'>Featured</h2>
+				<h2 className='text-center text-5xl sm:text-6xl font-semibold text-[#5e412f] mb-12'>
+					Featured
+				</h2>
 				<div className='relative'>
 					<div className='overflow-hidden'>
 						<div
@@ -43,24 +45,25 @@ const FeaturedProducts = ({ featuredProducts }) => {
 							style={{ transform: `translateX(-${currentIndex * (100 / itemsPerPage)}%)` }}
 						>
 							{featuredProducts?.map((product) => (
-								<div key={product._id} className='w-full sm:w-1/2 lg:w-1/3 xl:w-1/4 flex-shrink-0 px-2'>
-									<div className='bg-white bg-opacity-10 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden h-full transition-all duration-300 hover:shadow-xl border border-emerald-500/30'>
+								<div key={product._id} className='w-full sm:w-1/2 lg:w-1/3 xl:w-1/4 flex-shrink-0 px-3'>
+									<div className='bg-white rounded-xl shadow-md overflow-hidden h-full border border-[#decab1] transition-all duration-300 hover:shadow-lg'>
 										<div className='overflow-hidden'>
 											<img
 												src={product.image}
 												alt={product.name}
-												className='w-full h-48 object-cover transition-transform duration-300 ease-in-out hover:scale-110'
+												className='w-full h-48 object-cover transition-transform duration-300 ease-in-out hover:scale-105'
 											/>
 										</div>
-										<div className='p-4'>
-											<h3 className='text-lg font-semibold mb-2 text-white'>{product.name}</h3>
-											<p className='text-emerald-300 font-medium mb-4'>
-												${product.price.toFixed(2)}
+										<div className='p-5'>
+											<h3 className='text-2xl text-[#5e412f] font-semibold mb-2'>
+												{product.name}
+											</h3>
+											<p className='text-[#9c7e5c] text-lg font-medium mb-4'>
+												₹{product.price.toFixed(2)}
 											</p>
 											<button
 												onClick={() => addToCart(product)}
-												className='w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-4 rounded transition-colors duration-300 
-												flex items-center justify-center'
+												className='w-full bg-[#5e412f] hover:bg-[#7b5d42] text-[#f5f0e8] font-medium py-2 px-4 rounded-md transition duration-300 flex items-center justify-center'
 											>
 												<ShoppingCart className='w-5 h-5 mr-2' />
 												Add to Cart
@@ -71,11 +74,15 @@ const FeaturedProducts = ({ featuredProducts }) => {
 							))}
 						</div>
 					</div>
+
+					{/* Navigation buttons */}
 					<button
 						onClick={prevSlide}
 						disabled={isStartDisabled}
-						className={`absolute top-1/2 -left-4 transform -translate-y-1/2 p-2 rounded-full transition-colors duration-300 ${
-							isStartDisabled ? "bg-gray-400 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-500"
+						className={`absolute top-1/2 -left-5 transform -translate-y-1/2 p-2 rounded-full border transition-colors duration-300 ${
+							isStartDisabled
+								? "bg-gray-300 cursor-not-allowed"
+								: "bg-[#5e412f] hover:bg-[#7b5d42] text-white"
 						}`}
 					>
 						<ChevronLeft className='w-6 h-6' />
@@ -84,8 +91,10 @@ const FeaturedProducts = ({ featuredProducts }) => {
 					<button
 						onClick={nextSlide}
 						disabled={isEndDisabled}
-						className={`absolute top-1/2 -right-4 transform -translate-y-1/2 p-2 rounded-full transition-colors duration-300 ${
-							isEndDisabled ? "bg-gray-400 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-500"
+						className={`absolute top-1/2 -right-5 transform -translate-y-1/2 p-2 rounded-full border transition-colors duration-300 ${
+							isEndDisabled
+								? "bg-gray-300 cursor-not-allowed"
+								: "bg-[#5e412f] hover:bg-[#7b5d42] text-white"
 						}`}
 					>
 						<ChevronRight className='w-6 h-6' />
@@ -95,4 +104,5 @@ const FeaturedProducts = ({ featuredProducts }) => {
 		</div>
 	);
 };
+
 export default FeaturedProducts;

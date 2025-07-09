@@ -1,5 +1,4 @@
 import { redis } from "../lib/redis.js";
-import cloudinary from "../lib/cloudinary.js";
 import Product from "../models/product.model.js";
 
 export const getAllProducts = async (req, res) => {
@@ -61,54 +60,14 @@ export const createProduct = async (req, res) => {
 		
 		const { name, description, price, image, category } = req.body;
 
-		console.log("Creating product with data:", { name, description, price, category, hasImage: !!image });
-		console.log("Environment check:", {
-			cloudinaryName: process.env.CLOUDINARY_CLOUD_NAME,
-			hasCloudinaryKey: !!process.env.CLOUDINARY_API_KEY,
-			hasCloudinarySecret: !!process.env.CLOUDINARY_API_SECRET
-		});
-
-		// First, try to create the product without image to test basic functionality
-		if (!image) {
-			console.log("Creating product without image...");
-			const product = await Product.create({
-				name,
-				description,
-				price,
-				image: "",
-				category,
-			});
-			console.log("Product created successfully without image:", product._id);
-			return res.status(201).json(product);
-		}
-
-		let cloudinaryResponse = null;
-
-		if (image) {
-			console.log("Uploading image to Cloudinary...");
-			console.log("Image data length:", image.length);
-			console.log("Image data preview:", image.substring(0, 50) + "...");
-			
-			try {
-				cloudinaryResponse = await cloudinary.uploader.upload(image, { 
-					folder: "products",
-					resource_type: "auto",
-					quality: "auto:low"
-				});
-				console.log("Cloudinary upload successful:", cloudinaryResponse.secure_url);
-			} catch (cloudinaryError) {
-				console.log("Cloudinary upload error:", cloudinaryError);
-				console.log("Cloudinary error details:", cloudinaryError.message);
-				throw new Error("Image upload failed: " + cloudinaryError.message);
-			}
-		}
+		console.log("Creating product with data:", { name, description, price, category, imageUrl: image });
 
 		console.log("Creating product in database...");
 		const product = await Product.create({
 			name,
 			description,
 			price,
-			image: cloudinaryResponse?.secure_url ? cloudinaryResponse.secure_url : "",
+			image: image || "", // Use the image URL directly or empty string if no image
 			category,
 		});
 
@@ -137,15 +96,7 @@ export const deleteProduct = async (req, res) => {
 			return res.status(404).json({ message: "Product not found" });
 		}
 
-		if (product.image) {
-			const publicId = product.image.split("/").pop().split(".")[0];
-			try {
-				await cloudinary.uploader.destroy(`products/${publicId}`);
-				console.log("deleted image from cloduinary");
-			} catch (error) {
-				console.log("error deleting image from cloduinary", error);
-			}
-		}
+		// Since we're using ImgBB, images are handled externally
 
 		await Product.findByIdAndDelete(req.params.id);
 
