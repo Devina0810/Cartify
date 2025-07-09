@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import path from "path";
 
 import authRoutes from "./routes/auth.route.js";
@@ -12,12 +13,18 @@ import analyticsRoutes from "./routes/analytics.route.js";
 
 import { connectDB } from "./lib/db.js";
 
-dotenv.config({ path: "./backend/.env" });
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 const __dirname = path.resolve();
+
+// CORS configuration
+app.use(cors({
+	origin: "http://localhost:5173", // Your frontend URL
+	credentials: true, // Allow cookies
+}));
 
 app.use(express.json({ limit: "10mb" })); // allows you to parse the body of the request
 app.use(cookieParser());

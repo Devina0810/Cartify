@@ -15,9 +15,13 @@ export const useProductStore = create((set) => ({
 				products: [...prevState.products, res.data],
 				loading: false,
 			}));
+			toast.success("Product created successfully!");
 		} catch (error) {
-			toast.error(error.response.data.error);
+			console.log("Error creating product:", error);
+			const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || "Failed to create product";
+			toast.error(errorMessage);
 			set({ loading: false });
+			throw error; // Re-throw to allow component-level error handling
 		}
 	},
 	fetchAllProducts: async () => {
@@ -27,7 +31,8 @@ export const useProductStore = create((set) => ({
 			set({ products: response.data.products, loading: false });
 		} catch (error) {
 			set({ error: "Failed to fetch products", loading: false });
-			toast.error(error.response.data.error || "Failed to fetch products");
+			const errorMessage = error.response?.data?.message || error.response?.data?.error || "Failed to fetch products";
+			toast.error(errorMessage);
 		}
 	},
 	fetchProductsByCategory: async (category) => {
@@ -37,7 +42,8 @@ export const useProductStore = create((set) => ({
 			set({ products: response.data.products, loading: false });
 		} catch (error) {
 			set({ error: "Failed to fetch products", loading: false });
-			toast.error(error.response.data.error || "Failed to fetch products");
+			const errorMessage = error.response?.data?.message || error.response?.data?.error || "Failed to fetch products";
+			toast.error(errorMessage);
 		}
 	},
 	deleteProduct: async (productId) => {
@@ -50,7 +56,8 @@ export const useProductStore = create((set) => ({
 			}));
 		} catch (error) {
 			set({ loading: false });
-			toast.error(error.response.data.error || "Failed to delete product");
+			const errorMessage = error.response?.data?.message || error.response?.data?.error || "Failed to delete product";
+			toast.error(errorMessage);
 		}
 	},
 	toggleFeaturedProduct: async (productId) => {
@@ -66,7 +73,8 @@ export const useProductStore = create((set) => ({
 			}));
 		} catch (error) {
 			set({ loading: false });
-			toast.error(error.response.data.error || "Failed to update product");
+			const errorMessage = error.response?.data?.message || error.response?.data?.error || "Failed to update product";
+			toast.error(errorMessage);
 		}
 	},
 	fetchFeaturedProducts: async () => {

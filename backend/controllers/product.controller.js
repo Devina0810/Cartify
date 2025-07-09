@@ -113,6 +113,12 @@ export const createProduct = async (req, res) => {
 		});
 
 		console.log("Product created successfully:", product._id);
+		
+		// Update cache if needed
+		if (product.isFeatured) {
+			await updateFeaturedProductsCache();
+		}
+		
 		res.status(201).json(product);
 	} catch (error) {
 		console.log("=== ERROR IN CREATE PRODUCT ===");

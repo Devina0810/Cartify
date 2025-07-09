@@ -19,6 +19,7 @@ const CreateProductForm = () => {
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		console.log("Form submitted with data:", newProduct);
+		
 		try {
 			await createProduct(newProduct);
 			setNewProduct({ name: "", description: "", price: "", category: "", image: "" });
